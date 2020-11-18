@@ -1,6 +1,10 @@
 ## Installation
 http://doc.fedml.ai/#/installation-distributed-computing
 
+## Experimental Tracking
+wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
+wandb.init(project="fed_transformer")
+
 ## Run Experiments
 
 ## ResNet56 Federated Training
