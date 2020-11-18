@@ -12,18 +12,18 @@ wandb.init(project="fed_transformer")
 #### CIFAR10
 train on IID dataset 
 ```
-sh run_fedavg_distributed_pytorch.sh 2 2 1 8 transformer homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0
+sh run_fed_transformer.sh 8 8 1 8 transformer homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0
 
 ##run on background
-nohup sh run_fedavg_distributed_pytorch.sh 10 10 1 8 resnet56 homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 > ./fedavg-resnet-homo-cifar10.txt 2>&1 &
+nohup sh run_fed_transformer.sh 10 10 1 8 resnet56 homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 > ./fedavg-resnet-homo-cifar10.txt 2>&1 &
 ```
 
 train on non-IID dataset
 ```
-sh run_fedavg_distributed_pytorch.sh 10 10 1 8 resnet56 hetero 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0
+sh run_fed_transformer.sh 10 10 1 8 resnet56 hetero 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0
 
 ##run on background
-nohup sh run_fedavg_distributed_pytorch.sh 10 10 1 8 resnet56 hetero 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 > ./fedavg-resnet-hetero-cifar10.txt 2>&1 &
+nohup sh run_fed_transformer.sh 10 10 1 8 resnet56 hetero 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 > ./fedavg-resnet-hetero-cifar10.txt 2>&1 &
 ```
 
 
