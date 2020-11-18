@@ -270,7 +270,6 @@ if __name__ == "__main__":
     # In this case, please use our FedML distributed version (./fedml_experiments/distributed_fedavg)
     # model = create_model(args, model_name=args.model, output_dim=dataset[7])
     model = create_model(args, model_name=args.model, output_dim=10)
-    model.to(device)
 
     # start "federated averaging (FedAvg)"
     FedML_Fed_Transformer_distributed(process_id, worker_number, device, comm,
