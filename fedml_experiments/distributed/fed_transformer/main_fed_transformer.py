@@ -94,7 +94,7 @@ def add_args(parser):
                         help='gpu_num_per_server')
 
     parser.add_argument("--pretrained_dir", type=str,
-                        default="./../../../fedml_api/model/cv/pretrained/Transformer/vit/imagenet21k-ViT-B_16.npz",
+                        default="./../../../fedml_api/model/cv/pretrained/Transformer/vit/ViT-B_16.npz",
                         help="Where to search for pretrained vit models.")
 
     parser.add_argument('--ci', type=int, default=0,
