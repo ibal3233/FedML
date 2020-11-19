@@ -2,8 +2,11 @@
 http://doc.fedml.ai/#/installation-distributed-computing
 
 ## Download the pretrained Transformer weights
-sh fedml_api/model/cv/pretrained/Transformer/vit/download_pretrained_weights.sh
-
+```
+cd ./../../../fedml_api/model/cv/pretrained/Transformer/vit/
+sh download_pretrained_weights.sh
+cd ./../../../fedml_experiment/
+```
 
 ## Experimental Tracking
 wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
@@ -23,7 +26,12 @@ sh run_fed_transformer.sh 8 8 1 8 transformer homo 100 20 64 0.003 cifar10 "./..
 
 ##run on background
 nohup sh run_fed_transformer.sh 8 8 1 8 transformer homo 100 20 64 0.003 cifar10 "./../../../data/cifar10" 0 > ./fed-transformer-homo-cifar10.txt 2>&1 &
+
+## Chaoyang's machine
+nohup sh run_fed_transformer.sh 10 10 1 4 transformer homo 100 20 64 0.003 cifar10 "./../../../data/cifar10" 0 > ./fed-transformer-homo-cifar10.txt 2>&1 &
 ```
+
+
 
 train on non-IID dataset
 ```
