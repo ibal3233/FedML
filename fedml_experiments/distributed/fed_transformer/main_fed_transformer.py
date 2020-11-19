@@ -190,6 +190,10 @@ def create_model(args, model_name, output_dim):
         logging.info("Vision Transformer Configuration: " + str(config))
         num_classes = output_dim
         model = VisionTransformer(config, args.img_size, zero_head=True, num_classes=num_classes)
+        # freeze the backbone
+        for param in model.transformer.parameters():
+            param.requires_grad = False
+
         model.load_from(np.load(args.pretrained_dir))
         num_params = count_parameters(model)
         logging.info("Vision Transformer Model Size = " + str(num_params))

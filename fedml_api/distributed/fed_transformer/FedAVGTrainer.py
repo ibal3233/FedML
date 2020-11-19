@@ -24,7 +24,7 @@ class FedAVGTrainer(object):
         self.model.to(self.device)
         self.criterion = nn.CrossEntropyLoss().to(self.device)
         if self.args.client_optimizer == "sgd":
-            self.optimizer = torch.optim.SGD(model.parameters(),
+            self.optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.model.parameters()),
                                              lr=args.learning_rate,
                                              momentum=0.9,
                                              weight_decay=args.wd)
