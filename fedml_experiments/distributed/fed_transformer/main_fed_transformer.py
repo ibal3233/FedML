@@ -93,6 +93,9 @@ def add_args(parser):
     parser.add_argument('--gpu_num_per_server', type=int, default=4,
                         help='gpu_num_per_server')
 
+    parser.add_argument('--server_node_gpu_id', type=int, default=0,
+                        help='server_node_gpu_id')
+
     parser.add_argument("--pretrained_dir", type=str,
                         default="./../../../fedml_api/model/cv/pretrained/Transformer/vit/ViT-B_16.npz",
                         help="Where to search for pretrained vit models.")
@@ -191,10 +194,10 @@ def create_model(args, model_name, output_dim):
     return model
 
 
-def init_training_device(process_ID, fl_worker_num, gpu_num_per_machine):
+def init_training_device(args, process_ID, fl_worker_num, gpu_num_per_machine):
     # initialize the mapping from process ID to GPU ID: <process ID, GPU ID>
     if process_ID == 0:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda:" + str(args.server_node_gpu_id) if torch.cuda.is_available() else "cpu")
         return device
     process_gpu_dict = dict()
     for client_index in range(fl_worker_num):
@@ -258,7 +261,7 @@ if __name__ == "__main__":
     # machine 4: worker3, worker7;
     # Therefore, we can see that workers are assigned according to the order of machine list.
     # logging.info("process_id = %d, size = %d" % (process_id, worker_number))
-    device = init_training_device(process_id, worker_number - 1, args.gpu_num_per_server)
+    device = init_training_device(args, process_id, worker_number - 1, args.gpu_num_per_server)
 
     # load data
     dataset = load_data(args, args.dataset)

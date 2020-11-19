@@ -12,7 +12,8 @@ BATCH_SIZE=$9
 LR=${10}
 DATASET=${11}
 DATA_DIR=${12}
-CI=${13}
+SERVER_GPU=${13}
+CI=${14}
 
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
@@ -32,4 +33,5 @@ mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 ./main_fed_transformer
   --epochs $EPOCH \
   --batch_size $BATCH_SIZE \
   --lr $LR \
+  --server_node_gpu_id $SERVER_GPU \
   --ci $CI
