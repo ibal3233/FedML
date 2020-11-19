@@ -17,7 +17,7 @@ wandb.init(project="fed_transformer")
 #### CIFAR10
 train on IID dataset 
 ```
-sh run_fed_transformer.sh 8 8 1 8 transformer homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 0
+sh run_fed_transformer.sh 1 1 1 4 transformer homo 100 20 64 0.001 cifar10 "./../../../data/cifar10" 0 0
 
 sh run_fed_transformer.sh 8 8 1 8 transformer homo 100 20 64 0.003 cifar10 "./../../../data/cifar10" 0 0 
 

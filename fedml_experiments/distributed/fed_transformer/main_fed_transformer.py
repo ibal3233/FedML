@@ -96,6 +96,9 @@ def add_args(parser):
     parser.add_argument('--server_node_gpu_id', type=int, default=0,
                         help='server_node_gpu_id')
 
+    parser.add_argument("--img_size", default=224, type=int,
+                        help="Resolution size")
+
     parser.add_argument("--pretrained_dir", type=str,
                         default="./../../../fedml_api/model/cv/pretrained/Transformer/vit/ViT-B_16.npz",
                         help="Where to search for pretrained vit models.")
@@ -170,7 +173,7 @@ def load_data(args, dataset_name):
         train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
         class_num = data_loader(args.dataset, args.data_dir, args.partition_method,
-                                args.partition_alpha, args.client_num_in_total, args.batch_size)
+                                args.partition_alpha, args.client_num_in_total, args.batch_size, args)
 
     dataset = [train_data_num, test_data_num, train_data_global, test_data_global,
                train_data_local_num_dict, train_data_local_dict, test_data_local_dict, class_num]
@@ -182,12 +185,11 @@ def create_model(args, model_name, output_dim):
     model = None
     if model_name == "transformer":
         model_type = 'vit-B_16'
-        # pretrained on ImageNet (224x224)
-        img_size = 32
+        # pretrained on ImageNet (224x224), and fine-tuned on (384x384) high resolution.
         config = CONFIGS[model_type]
         logging.info("Vision Transformer Configuration: " + str(config))
         num_classes = output_dim
-        model = VisionTransformer(config, img_size, zero_head=True, num_classes=num_classes)
+        model = VisionTransformer(config, args.img_size, zero_head=True, num_classes=num_classes)
         model.load_from(np.load(args.pretrained_dir))
         num_params = count_parameters(model)
         logging.info("Vision Transformer Model Size = " + str(num_params))
