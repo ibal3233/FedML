@@ -147,9 +147,9 @@ class Embeddings(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
 
         # [64, 5, 768]
-        logging.info("x.size = " + str(x.shape))
+        # logging.info("x.size = " + str(x.shape))
         # [64, 5, 768]
-        logging.info("self.position_embeddings.size = " + str(self.position_embeddings.shape))
+        # logging.info("self.position_embeddings.size = " + str(self.position_embeddings.shape))
         embeddings = x + self.position_embeddings
         embeddings = self.dropout(embeddings)
         return embeddings
