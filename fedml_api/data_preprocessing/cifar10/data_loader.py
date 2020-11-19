@@ -94,6 +94,7 @@ def _data_transforms_cifar10(args=None):
         train_transform.transforms.append(Cutout(16))
 
         valid_transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize(args.img_size),
             transforms.ToTensor(),
             transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
