@@ -119,7 +119,8 @@ class FedAVGAggregator(object):
 
                 """
                 Note: CI environment is CPU-based computing. 
-                The training speed for RNN training is to slow in this setting, so we only test a client to make sure there is no programming error.
+                The training speed for RNN training is too slow in this setting, 
+                so we only test a client to make sure there is no programming error.
                 """
                 if self.args.ci == 1:
                     break
