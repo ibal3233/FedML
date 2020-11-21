@@ -291,6 +291,7 @@ if __name__ == "__main__":
 
     # Model
     model = create_model(args, model_name=args.model, output_dim=10)
+    model.to(device)
     if args.is_distributed == 1:
         model = get_ddp_model(model, local_rank)
     if global_rank == 0:
