@@ -1,0 +1,12 @@
+program: run_fed_transformer.sh
+method: grid
+metric:
+  goal: maximize
+  name: Test/Acc
+parameters:
+  epochs:
+    values: [1, 3, 5, 8, 10, 15, 20]
+  lr:
+    values: [0.1, 0.3, 0.01, 0.03, 0.001, 0.003, 0.0001, 0.0003]
+  comm_round:
+    values: [100, 150, 200]
