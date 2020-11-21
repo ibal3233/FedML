@@ -20,13 +20,10 @@ class ToyModel(nn.Module):
         return self.net2(self.relu(self.net1(x)))
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
-    parser.add_argument("--local_rank", type=int, default=0)
-    args = parser.parse_args()
-    print(args)
-
-    gpu_per_node = torch.cuda.device_count()
+def init_ddp():
+    # use InfiniBand
+    os.environ['NCCL_DEBUG'] = 'INFO'
+    os.environ['NCCL_SOCKET_IFNAME'] = 'ib0'
 
     # This the global rank: 0, 1, 2, ..., 15
     global_rank = int(os.environ['RANK'])
@@ -41,26 +38,48 @@ if __name__ == "__main__":
 
     local_rank = args.local_rank
     print(f"Running basic DDP example on local rank {local_rank}.")
+    return local_rank, global_rank
 
-    # create model and move it to GPU with id rank
+
+def get_ddp_model(model, local_rank):
+    return DDP(model, device_ids=[local_rank], output_device=local_rank)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
+    parser.add_argument("--local_rank", type=int, default=0)
+    args = parser.parse_args()
+    print(args)
+
+    # DDP
+    local_rank, global_rank = init_ddp()
+
+    # GPU
     device = torch.device("cuda:" + str(local_rank))
 
+    # Model
     model = ToyModel().to(device)
+    model = get_ddp_model(model, local_rank)
     if global_rank == 0:
         print(model)
 
-    os.environ['NCCL_DEBUG'] = 'INFO'
-    os.environ['NCCL_SOCKET_IFNAME'] = 'ib0'
-    ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    # define loss function and optimizer
     loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.001)
 
+    # 1. forward propagation
     optimizer.zero_grad()
-    outputs = ddp_model(torch.randn(20, 10))
+    outputs = model(torch.randn(20, 10))
+
+    # 2. compute loss
     labels = torch.randn(20, 5).to(device)
     loss = loss_fn(outputs, labels)
     print("rank=%d, loss=%f" % (local_rank, loss))
+
+    # 3. backward propagation
     loss.backward()
+
+    # 4. update weight
     optimizer.step()
 
     dist.destroy_process_group()
