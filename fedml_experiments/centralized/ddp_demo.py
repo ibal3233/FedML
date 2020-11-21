@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("world_size = %d" % world_size)
 
     # initialize the process group
-    dist.init_process_group(backend="nccl", rank=args.local_rank, world_size=world_size)
+    dist.init_process_group(backend="nccl", rank=global_rank, world_size=world_size)
 
     local_rank = args.local_rank
     print(f"Running basic DDP example on local rank {local_rank}.")
@@ -49,6 +49,8 @@ if __name__ == "__main__":
     if global_rank == 0:
         print(model)
 
+    os.environ['NCCL_DEBUG'] = 'INFO'
+    os.environ['NCCL_SOCKET_IFNAME'] = 'ib0'
     ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
@@ -57,8 +59,8 @@ if __name__ == "__main__":
     outputs = ddp_model(torch.randn(20, 10))
     labels = torch.randn(20, 5).to(device)
     loss = loss_fn(outputs, labels)
-    loss.backward()
     print("rank=%d, loss=%f" % (local_rank, loss))
+    loss.backward()
     optimizer.step()
 
     dist.destroy_process_group()
