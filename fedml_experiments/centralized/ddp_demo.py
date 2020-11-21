@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("world_size = %d" % world_size)
 
     # initialize the process group
-    dist.init_process_group(backend="nccl", init_method="env://", rank=args.local_rank, world_size=world_size)
+    dist.init_process_group(backend="nccl", rank=args.local_rank, world_size=world_size)
 
     local_rank = args.local_rank
     print(f"Running basic DDP example on local rank {local_rank}.")
@@ -46,11 +46,10 @@ if __name__ == "__main__":
     device = torch.device("cuda:" + str(local_rank))
 
     model = ToyModel().to(device)
-    print(model)
+    if global_rank == 0:
+        print(model)
 
     ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
-    print(model)
-
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
 
