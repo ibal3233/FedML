@@ -84,20 +84,15 @@ def _data_transforms_cifar10(args=None):
     if args is not None:
         train_transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize(args.img_size),
-            transforms.RandomCrop(args.img_size),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomResizedCrop((args.img_size, args.img_size), scale=(0.05, 1.0)),
             transforms.ToTensor(),
-            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
-        train_transform.transforms.append(Cutout(16))
-
         valid_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(args.img_size),
+            transforms.Resize((args.img_size, args.img_size)),
             transforms.ToTensor(),
-            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
     else:
         train_transform = transforms.Compose([
