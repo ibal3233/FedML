@@ -82,7 +82,7 @@ def _extract_features(model, X_train, y_train, X_test, y_test):
         train_data_extracted_features = load_from_pickle_file(path_train)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(zip(X_train, y_train)):
+            for batch_idx, (x, target) in enumerate(X_train, y_train):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
@@ -96,7 +96,7 @@ def _extract_features(model, X_train, y_train, X_test, y_test):
         test_data_extracted_features = load_from_pickle_file(path_test)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(zip(X_test, y_test)):
+            for batch_idx, (x, target) in enumerate(X_test, y_test):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
