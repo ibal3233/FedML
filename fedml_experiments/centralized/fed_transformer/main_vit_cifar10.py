@@ -71,7 +71,7 @@ def create_model(args, model_name, output_dim):
     return model
 
 
-def _extract_features(model, train_data, test_data):
+def _extract_features(model, X_train, y_train, X_test, y_test):
     model.eval()
 
     path_train = "./extracted_features/" + "train.pkl"
@@ -82,7 +82,7 @@ def _extract_features(model, train_data, test_data):
         train_data_extracted_features = load_from_pickle_file(path_train)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(train_data):
+            for batch_idx, (x, target) in enumerate(zip(X_train, y_train)):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
@@ -96,7 +96,7 @@ def _extract_features(model, train_data, test_data):
         test_data_extracted_features = load_from_pickle_file(path_test)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(test_data):
+            for batch_idx, (x, target) in enumerate(zip(X_test, y_test)):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
@@ -189,7 +189,7 @@ def train(epoch, epoch_loss, criterion, optimizer, scheduler, train_data_extract
                                                                               sum(epoch_loss) / len(epoch_loss)))
 
 
-def train_and_eval(model, train_data, test_data, args, device):
+def train_and_eval(model, X_train, y_train, X_test, y_test, args, device):
     criterion = nn.CrossEntropyLoss().to(device)
     if args.client_optimizer == "sgd":
         optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
@@ -208,7 +208,7 @@ def train_and_eval(model, train_data, test_data, args, device):
         scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps,
                                          t_total=args.epochs)
 
-    train_data_extracted_features, test_data_extracted_features = _extract_features(model, train_data, test_data)
+    train_data_extracted_features, test_data_extracted_features = _extract_features(model, X_train, y_train, X_test, y_test)
 
     epoch_loss = []
     for epoch in range(args.epochs):
@@ -297,10 +297,8 @@ if __name__ == "__main__":
         print(model)
 
     X_train, y_train, X_test, y_test = load_data(args.data_dir, args)
-    train_data = (X_train, y_train)
-    test_data = (X_test, y_test)
 
-    train_and_eval(model, train_data, test_data, args, device)
+    train_and_eval(model, X_train, y_train, X_test, y_test, args, device)
 
     if args.is_distributed == 1:
         dist.destroy_process_group()
