@@ -36,9 +36,6 @@ if __name__ == "__main__":
     world_size = int(os.environ['WORLD_SIZE'])
     print("world_size = %d" % world_size)
 
-    gpu_device_id = global_rank % gpu_per_node
-    print("gpu_device_id = " + str(gpu_device_id))
-
     # initialize the process group
     dist.init_process_group(backend="gloo", rank=args.local_rank, world_size=world_size)
 
@@ -46,8 +43,11 @@ if __name__ == "__main__":
     print(f"Running basic DDP example on local rank {local_rank}.")
 
     # create model and move it to GPU with id rank
-    model = ToyModel().to(local_rank)
+    device = torch.device("cuda:" + str(local_rank))
+
+    model = ToyModel().to(device)
     print(model)
+
     ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
     print(model)
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     optimizer.zero_grad()
     outputs = ddp_model(torch.randn(20, 10))
-    labels = torch.randn(20, 5).to(local_rank)
+    labels = torch.randn(20, 5).to(device)
     loss = loss_fn(outputs, labels)
     loss.backward()
     print("rank=%d, loss=%f" % (local_rank, loss))
