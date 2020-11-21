@@ -183,10 +183,10 @@ def train(epoch, epoch_loss, criterion, optimizer, scheduler, train_data_extract
         optimizer.step()
         scheduler.step()
         batch_loss.append(loss.item())
-        if len(batch_loss) > 0:
-            epoch_loss.append(sum(batch_loss) / len(batch_loss))
-            logging.info('(Training Epoch: {}\tBatch:{}\tLoss: {:.6f}'.format(epoch, batch_idx,
-                                                                              sum(epoch_loss) / len(epoch_loss)))
+        # if len(batch_loss) > 0:
+        #     epoch_loss.append(sum(batch_loss) / len(batch_loss))
+        #     logging.info('(Training Epoch: {}\tBatch:{}\tLoss: {:.6f}'.format(epoch, batch_idx,
+        #                                                                       sum(epoch_loss) / len(epoch_loss)))
 
 
 def train_and_eval(model, train_dl, test_dl, args, device):
