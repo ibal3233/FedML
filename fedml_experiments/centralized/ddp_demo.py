@@ -9,11 +9,6 @@ import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-
-def cleanup():
-    dist.destroy_process_group()
-
-
 class ToyModel(nn.Module):
     def __init__(self):
         super(ToyModel, self).__init__()
@@ -23,34 +18,6 @@ class ToyModel(nn.Module):
 
     def forward(self, x):
         return self.net2(self.relu(self.net1(x)))
-
-
-def run_demo(demo_fn, world_size):
-    mp.spawn(demo_fn,
-             args=(world_size,),
-             nprocs=world_size,
-             join=True)
-
-
-def demo_basic(local_rank):
-    print(f"Running basic DDP example on local rank {local_rank}.")
-
-    # create model and move it to GPU with id rank
-    model = ToyModel().to(local_rank)
-    ddp_model = DDP(model, device_ids=[local_rank])
-
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
-
-    optimizer.zero_grad()
-    outputs = ddp_model(torch.randn(20, 10))
-    labels = torch.randn(20, 5).to(local_rank)
-    loss = loss_fn(outputs, labels)
-    loss.backward()
-    print("rank=%d, loss=%f" % (local_rank, loss))
-    optimizer.step()
-
-    cleanup()
 
 
 if __name__ == "__main__":
@@ -75,5 +42,23 @@ if __name__ == "__main__":
     # initialize the process group
     dist.init_process_group(backend="nccl", init_method="env://", rank=args.local_rank, world_size=world_size)
 
-    demo_basic(args.local_rank)
+    local_rank = args.local_rank
+    print(f"Running basic DDP example on local rank {local_rank}.")
+
+    # create model and move it to GPU with id rank
+    model = ToyModel().to(local_rank)
+    ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+
+    loss_fn = nn.MSELoss()
+    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+
+    optimizer.zero_grad()
+    outputs = ddp_model(torch.randn(20, 10))
+    labels = torch.randn(20, 5).to(local_rank)
+    loss = loss_fn(outputs, labels)
+    loss.backward()
+    print("rank=%d, loss=%f" % (local_rank, loss))
+    optimizer.step()
+
+    dist.destroy_process_group()
 
