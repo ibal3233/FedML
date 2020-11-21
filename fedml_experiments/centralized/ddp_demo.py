@@ -3,7 +3,6 @@ import os
 
 import torch
 import torch.distributed as dist
-import torch.multiprocessing as mp
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -83,4 +82,3 @@ if __name__ == "__main__":
     optimizer.step()
 
     dist.destroy_process_group()
-
