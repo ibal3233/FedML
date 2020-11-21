@@ -140,17 +140,24 @@ class Embeddings(nn.Module):
         # B is batch size. In pytorch, (batch size, channel, width, height)
         B = x.shape[0]
         cls_tokens = self.cls_token.expand(B, -1, -1)
+        # logging.info("cls_tokens.size = " + str(cls_tokens.shape))
 
+        # logging.info("x.size = " + str(x.shape))
         x = self.patch_embeddings(x)
+        # logging.info("x.size = " + str(x.shape))
         x = x.flatten(2)
+        # logging.info("x.size = " + str(x.shape))
         x = x.transpose(-1, -2)
+        # logging.info("x.size = " + str(x.shape))
         x = torch.cat((cls_tokens, x), dim=1)
+        # logging.info("x.size = " + str(x.shape))
 
         # [64, 5, 768]
         # logging.info("x.size = " + str(x.shape))
         # [64, 5, 768]
         # logging.info("self.position_embeddings.size = " + str(self.position_embeddings.shape))
         embeddings = x + self.position_embeddings
+        # logging.info("self.embeddings.size = " + str(embeddings.shape))
         embeddings = self.dropout(embeddings)
         return embeddings
 
@@ -258,6 +265,8 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, labels=None):
         x, attn_weights = self.transformer(x)
+        # logging.info("transformer output x.size = " + str(x.shape))
+
         logits = self.head(x[:, 0])
 
         if labels is not None:

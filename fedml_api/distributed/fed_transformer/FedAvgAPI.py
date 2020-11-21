@@ -20,7 +20,7 @@ def FedML_Fed_Transformer_distributed(process_id, worker_number, device, comm, m
                     test_data_global, train_data_local_dict, test_data_local_dict, train_data_local_num_dict)
     else:
         init_client(args, device, comm, process_id, worker_number, model, train_data_num, train_data_local_num_dict,
-                    train_data_local_dict)
+                    train_data_local_dict, test_data_local_dict)
 
 
 def init_server(args, device, comm, rank, size, model, train_data_num, train_data_global, test_data_global,
@@ -36,10 +36,12 @@ def init_server(args, device, comm, rank, size, model, train_data_num, train_dat
     server_manager.run()
 
 
-def init_client(args, device, comm, process_id, size, model, train_data_num, train_data_local_num_dict, train_data_local_dict):
+def init_client(args, device, comm, process_id, size, model, train_data_num, train_data_local_num_dict,
+                train_data_local_dict, test_data_local_dict):
     # trainer
     client_index = process_id - 1
-    trainer = FedAVGTrainer(client_index, train_data_local_dict, train_data_local_num_dict, train_data_num, device, model, args)
+    trainer = FedAVGTrainer(client_index, train_data_local_dict, train_data_local_num_dict, test_data_local_dict,
+                            train_data_num, device, model, args)
 
     client_manager = FedAVGClientManager(args, trainer, comm, process_id, size)
     client_manager.run()

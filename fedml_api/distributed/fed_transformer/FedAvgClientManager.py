@@ -48,18 +48,24 @@ class FedAVGClientManager(ClientManager):
 
         self.trainer.update_model(model_params)
         self.trainer.update_dataset(int(client_index))
+
         self.round_idx += 1
         self.__train()
         if self.round_idx == self.num_rounds - 1:
             self.finish()
 
-    def send_model_to_server(self, receive_id, weights, local_sample_num):
+    def send_model_to_server(self, receive_id, weights, local_sample_num, train_acc, train_loss, test_acc, test_loss):
         message = Message(MyMessage.MSG_TYPE_C2S_SEND_MODEL_TO_SERVER, self.get_sender_id(), receive_id)
         message.add_params(MyMessage.MSG_ARG_KEY_MODEL_PARAMS, weights)
         message.add_params(MyMessage.MSG_ARG_KEY_NUM_SAMPLES, local_sample_num)
+        message.add_params(MyMessage.MSG_ARG_KEY_TRAIN_ACC, train_acc)
+        message.add_params(MyMessage.MSG_ARG_KEY_TRAIN_LOSS, train_loss)
+        message.add_params(MyMessage.MSG_ARG_KEY_TEST_ACC, test_acc)
+        message.add_params(MyMessage.MSG_ARG_KEY_TEST_LOSS, test_loss)
         self.send_message(message)
 
     def __train(self):
         logging.info("#######training########### round_id = %d" % self.round_idx)
         weights, local_sample_num = self.trainer.train()
-        self.send_model_to_server(0, weights, local_sample_num)
+        train_acc, train_loss, test_acc, test_loss = self.trainer.test()
+        self.send_model_to_server(0, weights, local_sample_num, train_acc, train_loss, test_acc, test_loss)

@@ -29,15 +29,15 @@ class FedAVGAggregator(object):
         self.flag_client_model_uploaded_dict = dict()
         for idx in range(self.worker_num):
             self.flag_client_model_uploaded_dict[idx] = False
-        self.model, _ = self.init_model(model)
+        self.model = model
 
-    def init_model(self, model):
-        model_params = model.state_dict()
-        # logging.info(model)
-        return model, model_params
+        self.train_acc_client_dict = dict()
+        self.train_loss_client_dict = dict()
+        self.test_acc_client_dict = dict()
+        self.test_loss_client_dict = dict()
 
     def get_global_model_params(self):
-        return self.model.state_dict()
+        return self.model.head.state_dict()
 
     def add_local_trained_result(self, index, model_params, sample_num):
         logging.info("add_model. index = %d" % index)
@@ -78,7 +78,7 @@ class FedAVGAggregator(object):
                     averaged_params[k] += local_model_params[k] * w
 
         # update the global model which is cached at the server side
-        self.model.load_state_dict(averaged_params)
+        self.model.head.load_state_dict(averaged_params)
 
         end_time = time.time()
         logging.info("aggregate time cost: %d" % (end_time - start_time))
@@ -94,69 +94,28 @@ class FedAVGAggregator(object):
         logging.info("client_indexes = %s" % str(client_indexes))
         return client_indexes
 
-    def test_on_all_clients(self, round_idx):
-        if round_idx % self.args.frequency_of_the_test == 0 or round_idx == self.args.comm_round - 1:
-            logging.info("################local_test_on_all_clients : {}".format(round_idx))
-            train_num_samples = []
-            train_tot_corrects = []
-            train_losses = []
+    def add_client_test_result(self, client_index, train_acc, train_loss, test_acc, test_loss):
+        logging.info("################add_client_test_result : {}".format(client_index))
+        self.train_acc_client_dict[client_index] = train_acc
+        self.train_loss_client_dict[client_index] = train_loss
+        self.test_acc_client_dict[client_index] = test_acc
+        self.test_loss_client_dict[client_index] = test_loss
 
-            test_num_samples = []
-            test_tot_corrects = []
-            test_losses = []
-            for client_idx in range(self.args.client_num_in_total):
-                # train data
-                train_tot_correct, train_num_sample, train_loss = self._infer(self.train_data_local_dict[client_idx])
-                train_tot_corrects.append(copy.deepcopy(train_tot_correct))
-                train_num_samples.append(copy.deepcopy(train_num_sample))
-                train_losses.append(copy.deepcopy(train_loss))
+    def output_global_acc_and_loss(self, round_idx):
+        logging.info("################output_global_acc_and_loss : {}".format(round_idx))
 
-                # test data
-                test_tot_correct, test_num_sample, test_loss = self._infer(self.test_data_local_dict[client_idx])
-                test_tot_corrects.append(copy.deepcopy(test_tot_correct))
-                test_num_samples.append(copy.deepcopy(test_num_sample))
-                test_losses.append(copy.deepcopy(test_loss))
+        # test on training dataset
+        train_acc = np.array([self.train_acc_client_dict[k] for k in self.train_acc_client_dict.keys()]).mean()
+        train_loss = np.array([self.train_loss_client_dict[k] for k in self.train_loss_client_dict.keys()]).mean()
+        wandb.log({"Train/Acc": train_acc, "round": round_idx})
+        wandb.log({"Train/Loss": train_loss, "round": round_idx})
+        stats = {'training_acc': train_acc, 'training_loss': train_loss}
+        logging.info(stats)
 
-                """
-                Note: CI environment is CPU-based computing. 
-                The training speed for RNN training is to slow in this setting, so we only test a client to make sure there is no programming error.
-                """
-                if self.args.ci == 1:
-                    break
-
-            # test on training dataset
-            train_acc = sum(train_tot_corrects) / sum(train_num_samples)
-            train_loss = sum(train_losses) / sum(train_num_samples)
-            wandb.log({"Train/Acc": train_acc, "round": round_idx})
-            wandb.log({"Train/Loss": train_loss, "round": round_idx})
-            stats = {'training_acc': train_acc, 'training_loss': train_loss}
-            logging.info(stats)
-
-            # test on test dataset
-            test_acc = sum(test_tot_corrects) / sum(test_num_samples)
-            test_loss = sum(test_losses) / sum(test_num_samples)
-            wandb.log({"Test/Acc": test_acc, "round": round_idx})
-            wandb.log({"Test/Loss": test_loss, "round": round_idx})
-            stats = {'test_acc': test_acc, 'test_loss': test_loss}
-            logging.info(stats)
-
-    def _infer(self, test_data):
-        self.model.eval()
-        self.model.to(self.device)
-
-        test_loss = test_acc = test_total = 0.
-        criterion = nn.CrossEntropyLoss().to(self.device)
-        with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(test_data):
-                x = x.to(self.device)
-                target = target.to(self.device)
-                pred, _ = self.model(x)
-                loss = criterion(pred, target)
-                _, predicted = torch.max(pred, -1)
-                correct = predicted.eq(target).sum()
-
-                test_acc += correct.item()
-                test_loss += loss.item() * target.size(0)
-                test_total += target.size(0)
-
-        return test_acc, test_total, test_loss
+        # test on test dataset
+        test_acc = np.array([self.test_acc_client_dict[k] for k in self.test_acc_client_dict.keys()]).mean()
+        test_loss = np.array([self.test_loss_client_dict[k] for k in self.test_loss_client_dict.keys()]).mean()
+        wandb.log({"Test/Acc": test_acc, "round": round_idx})
+        wandb.log({"Test/Loss": test_loss, "round": round_idx})
+        stats = {'test_acc': test_acc, 'test_loss': test_loss}
+        logging.info(stats)

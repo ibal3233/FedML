@@ -20,4 +20,7 @@ class MyMessage(object):
     MSG_ARG_KEY_NUM_SAMPLES = "num_samples"
     MSG_ARG_KEY_MODEL_PARAMS = "model_params"
     MSG_ARG_KEY_CLIENT_INDEX = "client_idx"
-
+    MSG_ARG_KEY_TRAIN_ACC = "train_acc"
+    MSG_ARG_KEY_TRAIN_LOSS = "train_loss"
+    MSG_ARG_KEY_TEST_ACC = "test_acc"
+    MSG_ARG_KEY_TEST_LOSS = "test_loss"
