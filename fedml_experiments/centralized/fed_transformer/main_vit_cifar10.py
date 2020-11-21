@@ -203,10 +203,10 @@ def train_and_eval(model, train_data, test_data, args, device):
 
     if args.decay_type == "cosine":
         scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_steps,
-                                         t_total=args.comm_round)
+                                         t_total=args.epochs)
     else:
         scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps,
-                                         t_total=args.comm_round)
+                                         t_total=args.epochs)
 
     train_data_extracted_features, test_data_extracted_features = _extract_features(model, train_data, test_data)
 
