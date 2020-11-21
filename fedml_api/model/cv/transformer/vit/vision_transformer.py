@@ -261,6 +261,7 @@ class VisionTransformer(nn.Module):
         self.classifier = config.classifier
 
         self.transformer = Transformer(config, img_size, vis)
+
         self.head = Linear(config.hidden_size, num_classes)
 
     def forward(self, x, labels=None):
