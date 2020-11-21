@@ -10,12 +10,11 @@ import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
-import torch.optim as optim
 import wandb
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 # add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 from fedml_api.data_preprocessing.cifar10.data_loader import load_cifar10_data
 from fedml_api.distributed.fed_transformer.utils import count_parameters, WarmupCosineSchedule, WarmupLinearSchedule, \
     load_from_pickle_file, save_as_pickle_file
@@ -45,7 +44,6 @@ def init_ddp():
 
 def get_ddp_model(model, local_rank):
     return DDP(model, device_ids=[local_rank], output_device=local_rank)
-
 
 
 def load_data(datadir, args):
@@ -217,6 +215,7 @@ def train_and_eval(model, train_data, test_data, args, device):
         train(epoch, epoch_loss, criterion, optimizer, scheduler, train_data_extracted_features)
         # weights = model.head.cpu().state_dict()
         eval(epoch, train_data_extracted_features, test_data_extracted_features)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
