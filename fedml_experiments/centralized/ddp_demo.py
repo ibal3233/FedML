@@ -69,11 +69,13 @@ if __name__ == "__main__":
 
     gpu_per_node = torch.cuda.device_count()
 
-    print("int(os.environ['RANK']) = %d" % int(os.environ['RANK']))
-    rank = int(os.environ['RANK'])
-    gpu_device_id = rank % gpu_per_node
+    # This the global rank: 0, 1, 2, ..., 15
+    global_rank = int(os.environ['RANK'])
+    print("int(os.environ['RANK']) = %d" % global_rank)
+    gpu_device_id = global_rank % gpu_per_node
     print("gpu_device_id = " + str(gpu_device_id))
 
     world_size = int(os.environ['WORLD_SIZE'])
-    demo_basic(rank, world_size)
+    print("world_size = %d" % world_size)
+    demo_basic(args.local_rank, world_size)
     # run_demo(demo_basic, 8)
