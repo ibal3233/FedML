@@ -15,7 +15,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 # add the FedML root directory to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-from fedml_api.data_preprocessing.cifar10.data_loader import get_dataloader
+from fedml_api.data_preprocessing.cifar10.data_loader import get_dataloader, load_cifar10_centralized_training_for_vit
 from fedml_api.distributed.fed_transformer.utils import count_parameters, WarmupCosineSchedule, WarmupLinearSchedule, \
     load_from_pickle_file, save_as_pickle_file
 from fedml_api.model.cv.transformer.vit.vision_transformer import VisionTransformer, CONFIGS
@@ -44,11 +44,6 @@ def init_ddp():
 
 def get_ddp_model(model, local_rank):
     return DDP(model, device_ids=[local_rank], output_device=local_rank)
-
-
-def load_data(dataset, data_dir, batch_size, args):
-    train_data_global, test_data_global = get_dataloader(dataset, data_dir, batch_size, batch_size, args=args)
-    return train_data_global, test_data_global
 
 
 def create_model(args, model_name, output_dim):
@@ -297,7 +292,7 @@ if __name__ == "__main__":
     if global_rank == 0:
         print(model)
 
-    train_dl, test_dl = load_data(args.dataset, args.data_dir, args.batch_size, args)
+    train_dl, test_dl = load_cifar10_centralized_training_for_vit(args)
 
     train_and_eval(model, train_dl, test_dl, args, device)
 

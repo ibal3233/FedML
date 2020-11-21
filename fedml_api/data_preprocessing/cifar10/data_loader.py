@@ -5,6 +5,9 @@ import torch
 import torch.utils.data as data
 import torchvision.transforms as transforms
 from PIL import Image
+from torch.utils.data import RandomSampler, SequentialSampler, DataLoader
+from torchvision import datasets
+from torchvision.datasets.samplers import DistributedSampler
 
 from fedml_api.data_preprocessing.cifar10.datasets import CIFAR10_truncated
 
@@ -284,3 +287,56 @@ def load_partition_data_cifar10(dataset, data_dir, partition_method, partition_a
         test_data_local_dict[client_idx] = test_data_local
     return train_data_num, test_data_num, train_data_global, test_data_global, \
            data_local_num_dict, train_data_local_dict, test_data_local_dict, class_num
+
+
+def load_cifar10_centralized_training_for_vit(args):
+    if args.is_distributed == 1:
+        torch.distributed.barrier()
+
+    transform_train = transforms.Compose([
+        transforms.RandomResizedCrop((args.img_size, args.img_size), scale=(0.05, 1.0)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+    transform_test = transforms.Compose([
+        transforms.Resize((args.img_size, args.img_size)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ])
+
+    if args.dataset == "cifar10":
+        trainset = datasets.CIFAR10(root=args.data_dir,
+                                    train=True,
+                                    download=True,
+                                    transform=transform_train)
+        testset = datasets.CIFAR10(root=args.data_dir,
+                                   train=False,
+                                   download=True,
+                                   transform=transform_test) if args.is_distributed == 0 else None
+
+    else:
+        trainset = datasets.CIFAR100(root=args.data_dir,
+                                     train=True,
+                                     download=True,
+                                     transform=transform_train)
+        testset = datasets.CIFAR100(root=args.data_dir,
+                                    train=False,
+                                    download=True,
+                                    transform=transform_test) if args.is_distributed == 0 else None
+    if args.is_distributed == 1:
+        torch.distributed.barrier()
+
+    train_sampler = RandomSampler(trainset) if args.is_distributed == 0 else DistributedSampler(trainset)
+    test_sampler = SequentialSampler(testset)
+    train_loader = DataLoader(trainset,
+                              sampler=train_sampler,
+                              batch_size=args.train_batch_size,
+                              num_workers=4,
+                              pin_memory=True)
+    test_loader = DataLoader(testset,
+                             sampler=test_sampler,
+                             batch_size=args.eval_batch_size,
+                             num_workers=4,
+                             pin_memory=True) if testset is not None else None
+
+    return train_loader, test_loader
