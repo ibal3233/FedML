@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("world_size = %d" % world_size)
 
     # initialize the process group
-    dist.init_process_group(backend="gloo", rank=args.local_rank, world_size=world_size)
+    dist.init_process_group(backend="nccl", init_method="env://", rank=args.local_rank, world_size=world_size)
 
     local_rank = args.local_rank
     print(f"Running basic DDP example on local rank {local_rank}.")
