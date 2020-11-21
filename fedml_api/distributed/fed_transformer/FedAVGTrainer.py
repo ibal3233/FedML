@@ -1,12 +1,12 @@
-import copy
 import logging
 import time
+from os import path
 
 import torch
 from torch import nn
 
 from fedml_api.distributed.fed_transformer.utils import transform_tensor_to_list, WarmupCosineSchedule, \
-    WarmupLinearSchedule
+    WarmupLinearSchedule, save_as_pickle_file, load_from_pickle_file
 
 
 class FedAVGTrainer(object):
@@ -44,7 +44,7 @@ class FedAVGTrainer(object):
             self.scheduler = WarmupLinearSchedule(self.optimizer, warmup_steps=args.warmup_steps,
                                                   t_total=args.comm_round)
 
-        self.train_data_extracted_features, self.test_data_extracted_features= self._extract_features()
+        self.train_data_extracted_features, self.test_data_extracted_features = self._extract_features()
 
     def update_model(self, weights):
         # logging.info("update_model. client_index = %d" % self.client_index)
@@ -57,28 +57,40 @@ class FedAVGTrainer(object):
         self.test_local = self.test_data_local_dict[client_index]
 
     def _extract_features(self):
-        train_data_extracted_features = dict()
-        test_data_extracted_features = dict()
         self.model.eval()
         self.model.to(self.device)
 
-        with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(self.train_local):
-                time_start_test_per_batch = time.time()
-                x = x.to(self.device)
-                extracted_feature_x, _ = self.model.transformer(x)
-                train_data_extracted_features[batch_idx] = (extracted_feature_x[:, 0].cpu().detach(), target)
-                time_end_test_per_batch = time.time()
-                logging.info("train_local feature extraction - time per batch = " + str(time_end_test_per_batch - time_start_test_per_batch))
+        path_train = "./extracted_features/" + str(self.client_index) + "-train.pkl"
+        path_test = "./extracted_features/" + str(self.client_index) + "-test.pkl"
+        train_data_extracted_features = dict()
+        test_data_extracted_features = dict()
+        if path.exists(path_train):
+            train_data_extracted_features = load_from_pickle_file(path_train)
+        else:
+            with torch.no_grad():
+                for batch_idx, (x, target) in enumerate(self.train_local):
+                    time_start_test_per_batch = time.time()
+                    x = x.to(self.device)
+                    extracted_feature_x, _ = self.model.transformer(x)
+                    train_data_extracted_features[batch_idx] = (extracted_feature_x[:, 0].cpu().detach(), target)
+                    time_end_test_per_batch = time.time()
+                    logging.info("train_local feature extraction - time per batch = " + str(
+                        time_end_test_per_batch - time_start_test_per_batch))
+            save_as_pickle_file(path_train, train_data_extracted_features)
 
-        with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(self.test_local):
-                time_start_test_per_batch = time.time()
-                x = x.to(self.device)
-                extracted_feature_x, _ = self.model.transformer(x)
-                test_data_extracted_features[batch_idx] = (extracted_feature_x[:, 0].cpu().detach(), target)
-                time_end_test_per_batch = time.time()
-                logging.info("test_local feature extraction - time per batch = " + str(time_end_test_per_batch - time_start_test_per_batch))
+        if path.exists(path_test):
+            test_data_extracted_features = load_from_pickle_file(path_test)
+        else:
+            with torch.no_grad():
+                for batch_idx, (x, target) in enumerate(self.test_local):
+                    time_start_test_per_batch = time.time()
+                    x = x.to(self.device)
+                    extracted_feature_x, _ = self.model.transformer(x)
+                    test_data_extracted_features[batch_idx] = (extracted_feature_x[:, 0].cpu().detach(), target)
+                    time_end_test_per_batch = time.time()
+                    logging.info("test_local feature extraction - time per batch = " + str(
+                        time_end_test_per_batch - time_start_test_per_batch))
+            save_as_pickle_file(path_test, test_data_extracted_features)
 
         return train_data_extracted_features, test_data_extracted_features
 

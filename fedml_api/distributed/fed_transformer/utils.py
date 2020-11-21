@@ -1,5 +1,6 @@
 import logging
 import math
+import pickle
 
 import numpy as np
 import torch
@@ -85,3 +86,11 @@ def transform_tensor_to_list(model_params):
 def count_parameters(model):
     params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return params / 1000000
+
+
+def save_as_pickle_file(path, data):
+    pickle.dump(data, open(path, "wb"))
+
+
+def load_from_pickle_file(path):
+    return pickle.load(open(path, "rb"))
