@@ -63,8 +63,7 @@ def demo_basic(rank, world_size):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
-    parser.add_argument("--node_rank", type=int, default=0)
-
+    parser.add_argument("--local_rank", type=int, default=0)
     args = parser.parse_args()
     print(args)
 
