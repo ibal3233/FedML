@@ -15,7 +15,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 # add the FedML root directory to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-from fedml_api.data_preprocessing.cifar10.data_loader import load_cifar10_data
+from fedml_api.data_preprocessing.cifar10.data_loader import load_cifar10_data, get_dataloader
 from fedml_api.distributed.fed_transformer.utils import count_parameters, WarmupCosineSchedule, WarmupLinearSchedule, \
     load_from_pickle_file, save_as_pickle_file
 from fedml_api.model.cv.transformer.vit.vision_transformer import VisionTransformer, CONFIGS
@@ -46,9 +46,9 @@ def get_ddp_model(model, local_rank):
     return DDP(model, device_ids=[local_rank], output_device=local_rank)
 
 
-def load_data(datadir, args):
-    X_train, y_train, X_test, y_test = load_cifar10_data(datadir, args)
-    return X_train, y_train, X_test, y_test
+def load_data(dataset, data_dir, batch_size, args):
+    train_data_global, test_data_global = get_dataloader(dataset, data_dir, batch_size, batch_size, args=args)
+    return train_data_global, test_data_global
 
 
 def create_model(args, model_name, output_dim):
@@ -71,7 +71,7 @@ def create_model(args, model_name, output_dim):
     return model
 
 
-def _extract_features(model, X_train, y_train, X_test, y_test):
+def _extract_features(model, train_dl, test_dl):
     model.eval()
 
     path_train = "./extracted_features/" + "train.pkl"
@@ -82,7 +82,7 @@ def _extract_features(model, X_train, y_train, X_test, y_test):
         train_data_extracted_features = load_from_pickle_file(path_train)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(X_train, y_train):
+            for batch_idx, (x, target) in enumerate(train_dl):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
@@ -96,7 +96,7 @@ def _extract_features(model, X_train, y_train, X_test, y_test):
         test_data_extracted_features = load_from_pickle_file(path_test)
     else:
         with torch.no_grad():
-            for batch_idx, (x, target) in enumerate(X_test, y_test):
+            for batch_idx, (x, target) in enumerate(test_dl):
                 time_start_test_per_batch = time.time()
                 x = x.to(device)
                 extracted_feature_x, _ = model.transformer(x)
@@ -189,7 +189,7 @@ def train(epoch, epoch_loss, criterion, optimizer, scheduler, train_data_extract
                                                                               sum(epoch_loss) / len(epoch_loss)))
 
 
-def train_and_eval(model, X_train, y_train, X_test, y_test, args, device):
+def train_and_eval(model, train_dl, test_dl, args, device):
     criterion = nn.CrossEntropyLoss().to(device)
     if args.client_optimizer == "sgd":
         optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
@@ -208,7 +208,7 @@ def train_and_eval(model, X_train, y_train, X_test, y_test, args, device):
         scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps,
                                          t_total=args.epochs)
 
-    train_data_extracted_features, test_data_extracted_features = _extract_features(model, X_train, y_train, X_test, y_test)
+    train_data_extracted_features, test_data_extracted_features = _extract_features(model, train_dl, test_dl)
 
     epoch_loss = []
     for epoch in range(args.epochs):
@@ -296,9 +296,9 @@ if __name__ == "__main__":
     if global_rank == 0:
         print(model)
 
-    X_train, y_train, X_test, y_test = load_data(args.data_dir, args)
+    train_dl, test_dl = load_data(args.dataset, args.data_dir, args.batch_size, args)
 
-    train_and_eval(model, X_train, y_train, X_test, y_test, args, device)
+    train_and_eval(model, train_dl, test_dl, args, device)
 
     if args.is_distributed == 1:
         dist.destroy_process_group()
