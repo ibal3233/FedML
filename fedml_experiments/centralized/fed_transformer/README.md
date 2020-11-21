@@ -1,0 +1,1 @@
+nohup sh sweep.sh > ./sweep.txt 2>&1 &
