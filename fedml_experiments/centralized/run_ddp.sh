@@ -10,4 +10,5 @@ python -m torch.distributed.launch \
 --nproc_per_node=$NPROC_PER_NODE --nnodes=$NNODE --node_rank=$NODE_RANK \
 --master_addr $MASTER_ADDR \
 --master_port $MASTER_PORT \
-ddp_demo.py
+ddp_demo.py \
+--node_rank $NODE_RANK
