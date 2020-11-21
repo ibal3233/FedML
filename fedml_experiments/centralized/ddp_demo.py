@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import torch
@@ -13,7 +14,7 @@ def setup(rank, world_size):
     os.environ['MASTER_PORT'] = '12355'
 
     # initialize the process group
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    dist.init_process_group(backend="nccl", init_method="env://", rank=rank, world_size=world_size)
 
 
 def cleanup():
@@ -61,5 +62,18 @@ def demo_basic(rank, world_size):
 
 
 if __name__ == "__main__":
-    n_gpus = torch.cuda.device_count()
-    run_demo(demo_basic, 8)
+    parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
+    parser.add_argument("--node_rank", type=int, default=0)
+
+    args = parser.parse_args()
+
+    gpu_per_node = torch.cuda.device_count()
+
+    print("int(os.environ['RANK']) = %d" % int(os.environ['RANK']))
+    rank = int(os.environ['RANK'])
+    gpu_device_id = rank % gpu_per_node
+    print("gpu_device_id = " + str(gpu_device_id))
+
+    world_size = int(os.environ['WORLD_SIZE'])
+    demo_basic(rank, world_size)
+    # run_demo(demo_basic, 8)
