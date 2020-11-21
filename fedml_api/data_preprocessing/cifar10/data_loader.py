@@ -330,12 +330,12 @@ def load_cifar10_centralized_training_for_vit(args):
     test_sampler = SequentialSampler(testset)
     train_loader = DataLoader(trainset,
                               sampler=train_sampler,
-                              batch_size=args.train_batch_size,
+                              batch_size=args.batch_size,
                               num_workers=4,
                               pin_memory=True)
     test_loader = DataLoader(testset,
                              sampler=test_sampler,
-                             batch_size=args.eval_batch_size,
+                             batch_size=args.batch_size,
                              num_workers=4,
                              pin_memory=True) if testset is not None else None
 
