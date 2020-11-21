@@ -119,3 +119,4 @@ class FedAVGAggregator(object):
         wandb.log({"Test/Loss": test_loss, "round": round_idx})
         stats = {'test_acc': test_acc, 'test_loss': test_loss}
         logging.info(stats)
+
