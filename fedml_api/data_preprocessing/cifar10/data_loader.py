@@ -83,7 +83,6 @@ def _data_transforms_cifar10(args=None):
 
     if args is not None:
         train_transform = transforms.Compose([
-            transforms.ToPILImage(),
             transforms.RandomResizedCrop((args.img_size, args.img_size), scale=(0.05, 1.0)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
