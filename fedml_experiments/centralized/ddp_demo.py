@@ -66,6 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("--node_rank", type=int, default=0)
 
     args = parser.parse_args()
+    print(args)
 
     gpu_per_node = torch.cuda.device_count()
 

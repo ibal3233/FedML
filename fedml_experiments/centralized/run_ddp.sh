@@ -11,4 +11,4 @@ python -m torch.distributed.launch \
 --master_addr $MASTER_ADDR \
 --master_port $MASTER_PORT \
 ddp_demo.py \
---node_rank $NODE_RANK
+--local_rank $NODE_RANK
