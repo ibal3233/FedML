@@ -40,14 +40,16 @@ if __name__ == "__main__":
     print("gpu_device_id = " + str(gpu_device_id))
 
     # initialize the process group
-    dist.init_process_group(backend="nccl", init_method="env://", rank=args.local_rank, world_size=world_size)
+    dist.init_process_group(backend="gloo", rank=args.local_rank, world_size=world_size)
 
     local_rank = args.local_rank
     print(f"Running basic DDP example on local rank {local_rank}.")
 
     # create model and move it to GPU with id rank
     model = ToyModel().to(local_rank)
+    print(model)
     ddp_model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    print(model)
 
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
