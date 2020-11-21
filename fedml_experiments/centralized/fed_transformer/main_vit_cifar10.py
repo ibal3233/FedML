@@ -15,7 +15,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 # add the FedML root directory to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-from fedml_api.data_preprocessing.cifar10.data_loader import load_cifar10_data, get_dataloader
+from fedml_api.data_preprocessing.cifar10.data_loader import get_dataloader
 from fedml_api.distributed.fed_transformer.utils import count_parameters, WarmupCosineSchedule, WarmupLinearSchedule, \
     load_from_pickle_file, save_as_pickle_file
 from fedml_api.model.cv.transformer.vit.vision_transformer import VisionTransformer, CONFIGS
