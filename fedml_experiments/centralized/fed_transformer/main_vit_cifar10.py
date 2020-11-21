@@ -47,26 +47,6 @@ def get_ddp_model(model, local_rank):
     return DDP(model, device_ids=[local_rank], output_device=local_rank)
 
 
-def train(model, train_data):
-    # define loss function and optimizer
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
-
-    # 1. forward propagation
-    optimizer.zero_grad()
-    outputs = model(torch.randn(20, 10))
-
-    # 2. compute loss
-    labels = torch.randn(20, 5).to(device)
-    loss = loss_fn(outputs, labels)
-    print("rank=%d, loss=%f" % (local_rank, loss))
-
-    # 3. backward propagation
-    loss.backward()
-
-    # 4. update weight
-    optimizer.step()
-
 
 def load_data(datadir, args):
     X_train, y_train, X_test, y_test = load_cifar10_data(datadir, args)
@@ -235,9 +215,8 @@ def train_and_eval(model, train_data, test_data, args, device):
     epoch_loss = []
     for epoch in range(args.epochs):
         train(epoch, epoch_loss, criterion, optimizer, scheduler, train_data_extracted_features)
-        weights = model.head.cpu().state_dict()
-        eval()
-
+        # weights = model.head.cpu().state_dict()
+        eval(epoch, train_data_extracted_features, test_data_extracted_features)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="PyTorch DDP Demo")
@@ -279,6 +258,8 @@ if __name__ == "__main__":
                         default="./../../../fedml_api/model/cv/pretrained/Transformer/vit/ViT-B_16.npz",
                         help="Where to search for pretrained vit models.")
 
+    parser.add_argument("--is_distributed", default=0, type=int,
+                        help="Resolution size")
     args = parser.parse_args()
     print(args)
 
@@ -291,7 +272,11 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(0)
 
     # DDP
-    local_rank, global_rank = init_ddp()
+    if args.is_distributed == 1:
+        local_rank, global_rank = init_ddp()
+    else:
+        local_rank = 0
+        global_rank = 0
 
     # GPU
     device = torch.device("cuda:" + str(local_rank))
@@ -307,7 +292,8 @@ if __name__ == "__main__":
 
     # Model
     model = create_model(args, model_name=args.model, output_dim=10)
-    model = get_ddp_model(model, local_rank)
+    if args.is_distributed == 1:
+        model = get_ddp_model(model, local_rank)
     if global_rank == 0:
         print(model)
 
@@ -317,4 +303,5 @@ if __name__ == "__main__":
 
     train_and_eval(model, train_data, test_data, args, device)
 
-    dist.destroy_process_group()
+    if args.is_distributed == 1:
+        dist.destroy_process_group()
